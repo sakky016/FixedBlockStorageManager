@@ -1,5 +1,5 @@
 # FixedBlockStorageManager
-Fixed block storage manager
+Fixed block storage manager - View in raw mode to get a proper console output.
 
 Sample output:
 ============================
