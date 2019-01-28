@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SM_H
+#define SM_H
 #include<vector>
 #include<stack>
 
@@ -43,3 +44,4 @@ char *findAddressFromBlock(unsigned int block, PoolData_t *poolData);
 unsigned int findBlockFromAddress(char *addr, PoolData_t *poolData);
 void createNewPool(unsigned size);
 void expandPool(unsigned size);
+#endif

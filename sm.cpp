@@ -28,7 +28,7 @@ void initStorageManager(const unsigned initialPoolSize, int numPools, const unsi
         PoolData_t *poolData = (PoolData_t *)malloc(sizeof(PoolData_t));
         if (poolData == nullptr)
         {
-            printf("\n\n**MEMORY ERROR: initStorageManager: Failed to create poolData for Pool %u!!\n\n", pools[i]);
+            printf("\n\n**MEMORY ERROR: initStorageManager: Failed to create pool %u!!\n\n", pools[i]);
             abort();
         }
 
@@ -37,11 +37,6 @@ void initStorageManager(const unsigned initialPoolSize, int numPools, const unsi
         size_t sizeOfPoolInBytes = pools[i] * sizeof(char) * initialPoolSize;
         totalClaimedMemory += sizeOfPoolInBytes;
         char *ptr = (char *)malloc(sizeOfPoolInBytes);
-        if (poolData == nullptr)
-        {
-            printf("\n\n**MEMORY ERROR: initStorageManager: Failed to create Pool %u!!\n\n", pools[i]);
-            abort();
-        }
 
         initializePoolData(sizeOfPoolInBytes, ptr, pools[i], poolData);
 
@@ -128,25 +123,9 @@ void displayPoolInfo()
 }
 
 /*******************************************************************************************/
-/* Destroys all the pools and their corresponding metadata. */
-/*******************************************************************************************/
 void destroyStorageManager()
 {
-    map<unsigned int, PoolData_t*>::iterator it = m_PoolMap.begin();
-
-    printf("\n\n** INFO: Destroying pools now...\n");
-    while (it != m_PoolMap.end())
-    {
-        printf(" Freeing pool [%u] ... ", it->second->poolSize);
-        free(it->second->startAddress);
-        it->second->startAddress = nullptr;
-
-        printf(" Freeing metadata ... ");
-        free(it->second);
-        it->second = nullptr;
-        printf(" [ Done ]\n");
-        it++;
-    }//end of while
+    //TODO
 }
 
 /*******************************************************************************************/
@@ -213,7 +192,7 @@ void SM_dealloc(void *ptr)
     unsigned int poolSize = findPoolFromAddress(ptr);
     //printf("Deallocating 0x%x from pool %u\n", ptr, poolSize);
 
-    /* Mark this address as free, update stats */
+    /* Mark this address as free */
     PoolData_t *poolData = m_PoolMap[poolSize];
     poolData->freeBlocks++;
     poolData->usedBlocks--;
