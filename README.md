@@ -1,7 +1,6 @@
 # FixedBlockStorageManager
 Fixed block storage manager
 
-============================
 Sample output:
 ============================
 
