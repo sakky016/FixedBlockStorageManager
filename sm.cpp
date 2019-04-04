@@ -15,8 +15,19 @@ map<unsigned int, PoolData_t*> m_PoolMap;    // Mapping of size and pool
 
 
 
-/*******************************************************************************************/
-/* Creates pools on the basis of initial pool sizes specified.*/
+//----------------------------------------------------------------------------------------------
+// @name                    : initStorageManager
+//
+// @description             : Creates pools on the basis of initial pool sizes specified.
+//
+// @param initialPoolSize   : This is the size of each pool (in bytes) that will be allocated
+//                            at startup.
+// @param numPools          : Number of pools specified at startup
+// @param pools             : Array containing size of different pools that need to be created
+//                            at startup
+//
+// @returns                 : Nothing
+//----------------------------------------------------------------------------------------------
 void initStorageManager(const unsigned initialPoolSize, int numPools, const unsigned int *pools)
 {
     m_initialPoolSize = initialPoolSize;
@@ -49,7 +60,21 @@ void initStorageManager(const unsigned initialPoolSize, int numPools, const unsi
 
 }
 
-/*******************************************************************************************/
+//----------------------------------------------------------------------------------------------
+// @name                    : createNewPool
+//
+// @description             : Creates a new memory pool. This is called if an allocation 
+//                            is requested for a size for which there exists no pools. This
+//                            allocates memory to the pool and initializes its data. The size
+//                            of this pool will depend on the m_initialPoolSize which was 
+//                            initialized at the time of initStorageManager().
+//
+// @param sizeId            : The size of allocation (in bytes) which was requested. This 
+//                            size is not the same as the pool size. 
+
+//
+// @returns                 : Nothing
+//----------------------------------------------------------------------------------------------
 void createNewPool(unsigned sizeId)
 {
     PoolData_t *poolData = (PoolData_t *)malloc(sizeof(PoolData_t));
@@ -68,7 +93,19 @@ void createNewPool(unsigned sizeId)
     printf("Created new pool : %u\n", sizeId);
 }
 
-/*******************************************************************************************/
+//----------------------------------------------------------------------------------------------
+// @name                    : initializePoolData
+//
+// @description             : Initialize the Pool specific data.
+//
+// @param sizeOfPoolInBytes : Total size of the pool (bytes) that needs to be initialized.
+// @param ptr               : Pointer to start of this memory pool
+// @param sizeId            : Size ID of this pool. (e.g- For a request of 8 bytes, a pool of
+//                            sizeId=8 will be created)
+// @param poolData          : Pool specific data that has to be initialized
+//
+// @returns                 : Nothing
+//----------------------------------------------------------------------------------------------
 void initializePoolData(size_t sizeOfPoolInBytes, char *ptr, unsigned int sizeId, PoolData_t *poolData)
 {
     poolData->poolSize = sizeId;
@@ -93,7 +130,13 @@ void expandPool(unsigned size)
     //TODO
 }
 
-/*******************************************************************************************/
+//----------------------------------------------------------------------------------------------
+// @name                    : displayPoolInfo
+//
+// @description             : Displays detailed information of each pool present in the system.
+//
+// @returns                 : Nothing
+//----------------------------------------------------------------------------------------------
 void displayPoolInfo()
 {
     map<unsigned int, PoolData_t*>::iterator it = m_PoolMap.begin();
@@ -128,7 +171,18 @@ void destroyStorageManager()
     //TODO
 }
 
-/*******************************************************************************************/
+//----------------------------------------------------------------------------------------------
+// @name                    : SM_alloc
+//
+// @description             : This function is called from SM_ALLOC_ARRAY macro. It checks if
+//                            a pool of sizeID=size is present. If yes, then memory is allocated
+//                            from that pool. If not, then a new pool is created with sizeID=size
+//                            and memory is allocated from it.
+//
+// @param size              : Size of memory requested for heap allocation.
+//
+// @returns                 : Pointer to start of the allocated memory (from Pool)
+//----------------------------------------------------------------------------------------------
 void * SM_alloc(size_t size)
 {
     //printf("SM_alloc called for %d bytes\n", size);
@@ -180,7 +234,18 @@ void * SM_alloc(size_t size)
     return ptr;
 }
 
-/*******************************************************************************************/
+//----------------------------------------------------------------------------------------------
+// @name                    : SM_dealloc
+//
+// @description             : This function is called from SM_DEALLOC macro. It marks the 
+//                            memory pointed to by ptr as free. Actual de-allocation DOES NOT
+//                            takes place. This memory block is then re-claimed for future
+//                            allocations from this pool.
+//
+// @param ptr               : Pointer to memory that needs to be freed.
+//
+// @returns                 : Nothing
+//----------------------------------------------------------------------------------------------
 void SM_dealloc(void *ptr)
 {
     if (ptr == nullptr)
@@ -204,8 +269,19 @@ void SM_dealloc(void *ptr)
     //printf("Deallocated 0x%x block (%u) from pool %u\n", ptr, poolData->nextFreeBlock, poolSize);
 }
 
-/*******************************************************************************************/
-//TODO: Find some efficient way to determine in which pool does this ptr lie
+//----------------------------------------------------------------------------------------------
+// @name                    : findPoolFromAddress
+//
+// @description             : This function is used to determine the Pool (sizeId) in which
+//                            this memory block (address pointed by ptr) lies. this is used
+//                            at the time of deallocation.
+//                            TODO: Find some efficient way to determine in 
+//                                  which pool does this ptr lie
+//
+// @param ptr               : Pointer to memory whose pool needs to be determined.
+//
+// @returns                 : sizeId of the pool in which this memory resides.
+//----------------------------------------------------------------------------------------------
 unsigned int findPoolFromAddress(void *ptr)
 {
     map<unsigned int, PoolData_t*>::iterator it = m_PoolMap.begin();
@@ -225,13 +301,39 @@ unsigned int findPoolFromAddress(void *ptr)
     abort();
 }
 
-/*******************************************************************************************/
+//----------------------------------------------------------------------------------------------
+// @name                    : findAddressFromBlock
+//
+// @description             : Given the index (param block) and the pool, determine 
+//                            the address of memory. This implements an efficient way to 
+//                            determine memory address using simple arithmetic operation.
+//                            This becomes possible because the pools are of fixed size.
+//                            Each block (allocated memory) in a pool is at a fixed distance
+//                            from each other. This helps in a fast memory allocation.
+//
+// @param block             : Index of the block in this pool
+// @param poolData          : Pool specific data
+//
+// @returns                 : Pointer to memory corresponding to the given block.
+//----------------------------------------------------------------------------------------------
 char *findAddressFromBlock(unsigned int block, PoolData_t *poolData)
 {
     return poolData->startAddress + (block * poolData->poolSize);
 }
 
-/*******************************************************************************************/
+//----------------------------------------------------------------------------------------------
+// @name                    : findBlockFromAddress
+//
+// @description             : Given the memory address and the Pool specific data, it determines
+//                            the block i.e, index of memory chunk in the given Pool. This is
+//                            used at the time of de-allocation to quickly mark the next free
+//                            memory block in the given Pool.
+//
+// @param addr              : Memory address
+// @param poolData          : Pool specific data
+//
+// @returns                 : Block corresponding to the given address (addr).
+//----------------------------------------------------------------------------------------------
 unsigned int findBlockFromAddress(char *addr, PoolData_t *poolData)
 {
     return (addr - poolData->startAddress) / poolData->poolSize;    

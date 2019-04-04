@@ -3,23 +3,27 @@
 #include "random.h"
 #include "sm.h"
 
-/* Globals */
+//----------------------------------------------------------------------------------------------
+// Globals
+//----------------------------------------------------------------------------------------------
 RandomNumberGenerator g_rndGenerator;
 
-/* Macros */
-#define DO_POOL_ALLOCATION false
+//----------------------------------------------------------------------------------------------
+// Configurations
+//----------------------------------------------------------------------------------------------
+#define DO_POOL_ALLOCATION true
 
-#define DO_DEALLOCATIONS_ALWAYS false   // Priority 1
-#define DO_DEALLOCATIONS true          // Priority 2
+#define DO_DEALLOCATIONS_ALWAYS false   // Priority 1 - If this is true, value of DO_DEALLOCATIONS is ignored
+#define DO_DEALLOCATIONS true           // Priority 2
 
 #define MAX_ALLOCATIONS 0xffffff
 #define MAX_ALLOCATION_VALUE 128
 const unsigned int POOL_SIZE = 0xfffff;
 const unsigned int INITIAL_POOLS[] = { 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128};
 
-/*******************************************************************************************/
-/*                                      M A I N                                            */
-/*******************************************************************************************/
+//----------------------------------------------------------------------------------------------
+//            M A I N
+//----------------------------------------------------------------------------------------------
 int main()
 {
     if (DO_POOL_ALLOCATION)
